@@ -41,13 +41,13 @@ class filebeat::config {
           'file_permissions' => $filebeat::registry_file_permissions,
           'flush'            => $filebeat::registry_flush,
         },
+        'autodiscover'      => $filebeat::autodiscover,
       },
       'http'              => $filebeat::http,
       'cloud'             => $filebeat::cloud,
       'output'            => $filebeat::outputs,
       'shipper'           => $filebeat::shipper,
       'logging'           => $filebeat::logging,
-      'autodiscover'      => $filebeat::autodiscover,
       'runoptions'        => $filebeat::run_options,
       'processors'        => $filebeat::processors,
       'monitoring'        => $filebeat::monitoring,
@@ -136,6 +136,36 @@ class filebeat::config {
         notify  => Service['filebeat'],
       }
     } # end Linux
+
+    'SunOS'   : {
+      $validate_cmd = ($filebeat::disable_config_test or $skip_validation) ? {
+        true    => undef,
+        default => '/opt/local/bin/filebeat test config -c %',
+      }
+
+      file {'filebeat.yml':
+        ensure       => $filebeat::file_ensure,
+        path         => $filebeat::config_file,
+        content      => template($filebeat::conf_template),
+        owner        => $filebeat::config_file_owner,
+        group        => $filebeat::config_file_group,
+        mode         => $filebeat::config_file_mode,
+        validate_cmd => $validate_cmd,
+        notify       => Service['filebeat'],
+        require      => File['filebeat-config-dir'],
+      }
+
+      file {'filebeat-config-dir':
+        ensure  => $filebeat::directory_ensure,
+        path    => $filebeat::config_dir,
+        owner   => $filebeat::config_dir_owner,
+        group   => $filebeat::config_dir_group,
+        mode    => $filebeat::config_dir_mode,
+        recurse => $filebeat::purge_conf_dir,
+        purge   => $filebeat::purge_conf_dir,
+        force   => true,
+      }
+    } # end SunOS
 
     'FreeBSD'   : {
       $validate_cmd = ($filebeat::disable_config_test or $skip_validation) ? {

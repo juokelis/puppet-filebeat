@@ -20,6 +20,7 @@ class filebeat::params {
   $enable_conf_modules            = false
   $fields                         = {}
   $fields_under_root              = false
+  $ssl                            = {}
   $http                           = {}
   $cloud                          = {}
   $outputs                        = {}
@@ -99,6 +100,21 @@ class filebeat::params {
       $url_arch        = undef
     }
 
+    'SunOS': {
+      $package_ensure    = present
+      $config_file       = '/opt/local/etc/beats/filebeat.yml'
+      $config_dir        = '/opt/local/etc/filebeat.d'
+      $config_file_owner = 'root'
+      $config_file_group = 'root'
+      $config_dir_owner  = 'root'
+      $config_dir_group  = 'root'
+      $modules_dir       = '/opt/local/etc/filebeat.modules.d'
+      $tmp_dir           = '/tmp'
+      $service_provider  = undef
+      $install_dir       = undef
+      $url_arch          = undef
+    }
+
     'FreeBSD': {
       $package_ensure    = present
       $config_file       = '/usr/local/etc/beats/filebeat.yml'
@@ -151,5 +167,11 @@ class filebeat::params {
     default : {
       fail($kernel_fail_message)
     }
+  }
+
+  if versioncmp($facts['filebeat_version'], '7.16') > 0 {
+    $default_input_type = 'filestream'
+  } else {
+    $default_input_type = 'log'
   }
 }

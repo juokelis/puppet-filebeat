@@ -3,25 +3,7 @@
 <%- else -%>
 ---
 - type: <%= @input_type %>
-  <%- if @input_type =~ /(tcp|udp)/ -%>
-  host: <%= @host %>
-  <%- if @max_message_size -%>
-  max_message_size: <%= @max_message_size %>
-  <%- end -%>
-  <%- elsif @input_type == 'docker' -%>
-  containers:
-    ids:
-    <%- @containers_ids.each do |id| -%>
-    - <%= id %>
-    <%- end -%>
-    path: <%= @containers_path %>
-    stream: <%= @containers_stream %>
-  combine_partial: <%= @combine_partial %>
-  cri.parse_flags: <%= @cri_parse_flags %>
-  <%- elsif @input_type == 'syslog' -%>
-  protocol.<%= @syslog_protocol %>:
-    host: <%= @syslog_host %>
-  <%- else -%>
+  id: <%= @name %>
   paths:
   <%- @paths.each do |log_path| -%>
   - <%= log_path %>
@@ -54,13 +36,15 @@
   document_type: <%= @doc_type %>
   <%- end -%>
   <%- if @scan_frequency -%>
-  scan_frequency: <%= @scan_frequency %>
+  prospector:
+     scanner:
+        check_interval: <%= @scan_frequency %>
   <%- end -%>
   <%- if @harvester_buffer_size -%>
   harvester_buffer_size: <%= @harvester_buffer_size %>
   <%- end -%>
   <%- if @max_bytes -%>
-  max_bytes: <%= @max_bytes %>
+  message_max_bytes: <%= @max_bytes %>
   <%- end -%>
   <%- if @symlinks -%>
   symlinks: <%= @symlinks %>
@@ -105,22 +89,23 @@
   <%- end -%>
 
   <%- if @multiline.length > 0 -%>
-  multiline:
-    <%- if @multiline['pattern'] -%>
-    pattern: '<%= @multiline['pattern'] %>'
-    <%- end -%>
-    <%- if @multiline['negate'] -%>
-    negate: <%= @multiline['negate'] %>
-    <%- end -%>
-    <%- if @multiline['match'] -%>
-    match: <%= @multiline['match'] %>
-    <%- end -%>
-    <%- if @multiline['max_lines'] -%>
-    max_lines: <%= @multiline['max_lines'] %>
-    <%- end -%>
-    <%- if @multiline['timeout'] -%>
-    timeout: <%= @multiline['timeout'] %>
-    <%- end -%>
+  parsers:
+      - multiline:
+          <%- if @multiline['pattern'] -%>
+          pattern: '<%= @multiline['pattern'] %>'
+          <%- end -%>
+          <%- if @multiline['negate'] -%>
+          negate: <%= @multiline['negate'] %>
+          <%- end -%>
+          <%- if @multiline['match'] -%>
+          match: <%= @multiline['match'] %>
+          <%- end -%>
+          <%- if @multiline['max_lines'] -%>
+          max_lines: <%= @multiline['max_lines'] %>
+          <%- end -%>
+          <%- if @multiline['timeout'] -%>
+          timeout: <%= @multiline['timeout'] %>
+          <%- end -%>
   <%- end -%>
   tail_files: <%= @tail_files %>
 
@@ -128,14 +113,14 @@
   # original for harvesting but will report the symlink name as source.
   #symlinks: false
 
-  <%- if @backoff -%>
-  backoff: <%= @backoff %>
-  <%- end -%>
-  <%- if @max_backoff -%>
-  max_backoff: <%= @max_backoff %>
-  <%- end -%>
-  <%- if @backoff_factor -%>
-  backoff_factor: <%= @backoff_factor %>
+  <%- if @backoff or @max_backoff -%>
+  backoff:
+      <%- if @backoff -%>
+      init: <%= @backoff %>
+      <%- end -%>
+      <%- if @max_backoff -%>
+      max: <%= @max_backoff %>
+      <%- end -%>
   <%- end -%>
 
   # Experimental: Max number of harvesters that are started in parallel.
@@ -185,9 +170,6 @@
   <%- if @close_timeout -%>
   close_timeout: <%= @close_timeout %>
   <%- end -%>
-  <%- end -%>
-  <%- # Everything below this can be applied to any input. -%>
-  <%- # https://www.elastic.co/guide/en/beats/filebeat/current/configuration-general-options.html#configuration-general -%>
   <%- if @pipeline -%>
   pipeline: <%= @pipeline %>
   <%- end -%>
