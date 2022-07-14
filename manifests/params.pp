@@ -169,7 +169,7 @@ class filebeat::params {
     }
   }
 
-  if Integer($major_version) >= 8 or ('filebeat_version' in $facts and versioncmp($facts['filebeat_version'], '7.16') > 0) {
+  if 'filebeat_version' in $facts and versioncmp($facts['filebeat_version'], '7.16') > 0 {
     $default_input_type = 'filestream'
   } else {
     $default_input_type = 'log'
